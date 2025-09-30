@@ -2,6 +2,8 @@
 
 A full-stack real-time chat application built with NestJS, React, Socket.io, and Prisma ORM.
 
+![Demo](https://example.com/demo-screenshot.png)
+
 ## Features
 
 - Real-time messaging

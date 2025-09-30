@@ -4,25 +4,45 @@ services:
   backend:
     build: ./backend
     ports:
-      - "3000:3000"
+      - "3001:3001"
     environment:
       - DATABASE_URL=file:/app/dev.db
       - FRONTEND_URL=http://localhost:3000
+      - NODE_ENV=production
     volumes:
       - ./backend/dev.db:/app/dev.db
+      - ./backend/prisma:/app/prisma
+      - backend-logs:/app/logs # Persistent logs
     networks:
       - chat-network
+    # Health check for PM2 cluster
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend:
     build: ./frontend
     ports:
-      - "3001:3001"
+      - "3000:3000"
     environment:
       - VITE_BACKEND_URL=http://localhost:3001
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - chat-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  backend-logs:
 
 networks:
   chat-network:

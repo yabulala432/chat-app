@@ -3,16 +3,58 @@ import { Socket } from "socket.io-client";
 import io from "socket.io-client";
 import "./App.css";
 
+// Define TypeScript interfaces
+interface User {
+  id: string;
+  username: string;
+  email: string;
+}
+
+interface Message {
+  id: string;
+  content: string;
+  timestamp: string;
+  user: User;
+  username?: string;
+  message?: string;
+}
+
+interface Room {
+  id: string;
+  name: string;
+  description: string;
+  isPrivate: boolean;
+  _count?: {
+    users: number;
+  };
+}
+
+interface OnlineUser {
+  id: string;
+  username: string;
+}
+
+interface TypingUser {
+  id: string;
+  username: string;
+}
+
+interface AuthData {
+  email: string;
+  username: string;
+  password: string;
+}
+
 const App = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [messages, setMessages] = useState([]);
-  const [onlineUsers, setOnlineUsers] = useState([]);
-  const [rooms, setRooms] = useState([]);
-  const [currentRoom, setCurrentRoom] = useState(null);
-  const [typingUsers, setTypingUsers] = useState([]);
-  const [user, setUser] = useState(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [currentRoom, setCurrentRoom] = useState<string | null>(null);
+  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
+  const [user, setUser] = useState<User | null>(null);
   const [isLogin, setIsLogin] = useState(true);
-  const [authData, setAuthData] = useState({
+  const [authData, setAuthData] = useState<AuthData>({
     email: "",
     username: "",
     password: "",
@@ -22,8 +64,8 @@ const App = () => {
   const [newRoomName, setNewRoomName] = useState("");
   const [newRoomDescription, setNewRoomDescription] = useState("");
 
-  const messagesEndRef = useRef(null);
-  const typingTimeoutRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<number | null>(null);
 
   // Initialize socket connection
   useEffect(() => {
@@ -39,57 +81,63 @@ const App = () => {
       );
       setSocket(newSocket);
 
-      newSocket.on("recent_messages", (recentMessages) => {
+      newSocket.on("recent_messages", (recentMessages: Message[]) => {
         setMessages(recentMessages.reverse());
       });
 
-      newSocket.on("new_message", (newMessage) => {
+      newSocket.on("new_message", (newMessage: Message) => {
         setMessages((prev) => [...prev, newMessage]);
       });
 
-      newSocket.on("user_typing", (data) => {
-        setTypingUsers((prev) => {
-          const filtered = prev.filter((user) => user.id !== data.user.id);
-          if (data.isTyping) {
-            return [...filtered, data.user];
-          }
-          return filtered;
-        });
-      });
+      newSocket.on(
+        "user_typing",
+        (data: { user: TypingUser; isTyping: boolean }) => {
+          setTypingUsers((prev) => {
+            const filtered = prev.filter((user) => user.id !== data.user.id);
+            if (data.isTyping) {
+              return [...filtered, data.user];
+            }
+            return filtered;
+          });
+        }
+      );
 
-      newSocket.on("online_users", (users) => {
+      newSocket.on("online_users", (users: OnlineUser[]) => {
         setOnlineUsers(users);
       });
 
-      newSocket.on("user_online", (user) => {
+      newSocket.on("user_online", (user: OnlineUser) => {
         setOnlineUsers((prev) => {
           const filtered = prev.filter((u) => u.id !== user.id);
           return [...filtered, user];
         });
       });
 
-      newSocket.on("user_offline", (user) => {
+      newSocket.on("user_offline", (user: OnlineUser) => {
         setOnlineUsers((prev) => prev.filter((u) => u.id !== user.id));
       });
 
-      newSocket.on("available_rooms", (availableRooms) => {
+      newSocket.on("available_rooms", (availableRooms: Room[]) => {
         setRooms(availableRooms);
       });
 
-      newSocket.on("user_joined_room", (data) => {
-        console.log(`${data.user.username} joined room ${data.roomId}`);
-      });
+      newSocket.on(
+        "user_joined_room",
+        (data: { user: User; roomId: string }) => {
+          console.log(`${data.user.username} joined room ${data.roomId}`);
+        }
+      );
 
-      newSocket.on("user_left_room", (data) => {
+      newSocket.on("user_left_room", (data: { user: User; roomId: string }) => {
         console.log(`${data.user.username} left room ${data.roomId}`);
       });
 
-      newSocket.on("error", (error) => {
+      newSocket.on("error", (error: { message: string }) => {
         console.error("Socket error:", error);
         alert(error.message || "An error occurred");
       });
 
-      newSocket.on("room_updated", (updatedRooms) => {
+      newSocket.on("room_updated", (updatedRooms: Room[]) => {
         setRooms(updatedRooms);
       });
 
@@ -99,7 +147,9 @@ const App = () => {
         setUser(JSON.parse(userData));
       }
 
-      return () => newSocket.close();
+      return () => {
+        newSocket.close();
+      };
     }
   }, []);
 
@@ -111,7 +161,7 @@ const App = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleAuth = async (e) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const endpoint = isLogin ? "login" : "register";
@@ -145,7 +195,7 @@ const App = () => {
         alert("Registration successful! Please login.");
       }
     } catch (error) {
-      alert(error.message);
+      alert((error as Error).message);
     }
   };
 
@@ -162,9 +212,9 @@ const App = () => {
     setCurrentRoom(null);
   };
 
-  const sendMessage = (e) => {
+  const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim() && user) {
+    if (message.trim() && user && socket) {
       socket.emit("send_message", {
         content: message.trim(),
         roomId: currentRoom,
@@ -175,13 +225,15 @@ const App = () => {
   };
 
   const handleTyping = () => {
-    if (user) {
+    if (user && socket) {
       socket.emit("typing", {
         isTyping: true,
         roomId: currentRoom,
       });
 
-      clearTimeout(typingTimeoutRef.current);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
       typingTimeoutRef.current = setTimeout(() => {
         socket.emit("typing", {
           isTyping: false,
@@ -192,7 +244,7 @@ const App = () => {
   };
 
   const stopTyping = () => {
-    if (user) {
+    if (user && socket) {
       socket.emit("typing", {
         isTyping: false,
         roomId: currentRoom,
@@ -200,7 +252,7 @@ const App = () => {
     }
   };
 
-  const joinRoom = (roomId) => {
+  const joinRoom = (roomId: string) => {
     if (socket && user) {
       socket.emit("join_room", { roomId });
       setCurrentRoom(roomId);
@@ -229,7 +281,7 @@ const App = () => {
     }
   };
 
-  const formatTime = (timestamp) => {
+  const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",

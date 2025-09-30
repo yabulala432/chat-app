@@ -2,7 +2,9 @@
 
 A full-stack real-time chat application built with NestJS, React, Socket.io, and Prisma ORM.
 
-![Demo](https://example.com/demo-screenshot.png)
+![Demo](https://raw.githubusercontent.com/yabulala432/chat-app/refs/heads/master/screenshots/photo-1.png)
+![Demo](https://raw.githubusercontent.com/yabulala432/chat-app/refs/heads/master/screenshots/photo-2.png)
+![Demo](https://raw.githubusercontent.com/yabulala432/chat-app/refs/heads/master/screenshots/photo-3.png)
 
 ## Features
 

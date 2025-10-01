@@ -36,3 +36,10 @@ npm i
 cd chat-app/frontend
 npm i
 ```
+
+### Environment Variables
+at the root of backend: 
+
+at the root of frontend:
+
+inside backend/src/prisma: 

@@ -38,8 +38,17 @@ npm i
 ```
 
 ### Environment Variables
-at the root of backend: 
+
+at the root of backend:
+
+- JWT_SECRET
+- FRONTEND_URL
+- PORT=3001
 
 at the root of frontend:
 
-inside backend/src/prisma: 
+- VITE_BACKEND_URL
+
+inside backend/src/prisma:
+
+- DATABASE_URL=postgresql://username:password@localhost:5432/dbName

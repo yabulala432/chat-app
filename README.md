@@ -32,9 +32,11 @@ A full-stack real-time chat application built with NestJS, React, Socket.io, and
 git clone https://github.com/yabulala432/chat-app/
 cd chat-app/backend
 npm i
+npm run start:dev
 
 cd chat-app/frontend
 npm i
+npm run dev
 ```
 
 ### Environment Variables
